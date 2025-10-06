@@ -1,0 +1,5 @@
+============= User API ===============
+/user/all-users (GET)
+/user/create-user (POST) 
+/user/delete-user/:id (POST)
+/user/update-user/:id (POST)
