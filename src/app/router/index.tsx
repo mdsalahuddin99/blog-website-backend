@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { userRoute } from "../modeuls/user/user.route.js";
+import { UserRoute } from "../modules/user/user.route.js";
+
 
 
 const router = Router()
@@ -13,7 +14,7 @@ interface Iroute {
 const routeList: Iroute[] = [
     {
         path:"/user",
-        route: userRoute,
+        route: UserRoute,
     }
 ]
 
