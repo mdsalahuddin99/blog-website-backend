@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from "express"
 import httpStatus from "http-status-codes"
 import { User } from "./user.model.js"
 import { UserServices } from "./user.services.js"
-import catchAsync from "../../utilis/catchAsync.js"
+import catchAsync from "../../utils/catchAsync.js"
 
 
 const getUsers = catchAsync(async (req: Request, res: Response, next: NextFunction) => {
