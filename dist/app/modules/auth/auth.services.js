@@ -1,34 +1,38 @@
 import { User } from "../user/user.model.js";
-import { email, jwt } from 'zod';
 import bcrypt from "bcryptjs";
-const login = async (paylode, res) => {
-    const { email, password } = paylode;
-    const isUserExsit = await User.findOne({ email });
-    if (!isUserExsit) {
-        res.status(400).json({
+import jwt from "jsonwebtoken";
+const login = async (payload, res) => {
+    const { email, password } = payload;
+    const isUserExist = await User.findOne({ email });
+    if (!isUserExist) {
+        return res.status(400).json({
             status: "error",
-            massages: "user doesn't exist"
+            message: "User doesn't exist",
         });
     }
-    const isPasswordMatch = await bcrypt.compareSync(password, isUserExsit?.password);
+    const isPasswordMatch = await bcrypt.compare(password, isUserExist.password);
     if (!isPasswordMatch) {
-        res.status(400).json({
+        return res.status(400).json({
             status: "error",
-            massages: "password doesn't exist"
+            message: "Invalid password",
         });
     }
-    const tokenPaylode = {
-        name: isUserExsit?.name,
-        email: isUserExsit?.email,
-        avatar: isUserExsit?.avatar,
-        isVerified: isUserExsit?.isVerified,
-        isPremium: isUserExsit?.isVerified,
+    const tokenPayload = {
+        name: isUserExist.name,
+        email: isUserExist.email,
+        avatar: isUserExist.avatar,
+        isVerified: isUserExist.isVerified,
+        isPremium: isUserExist.isVerified,
     };
-    const accessToken = jwt.sign(tokenPaylode, "secret");
+    const accessToken = jwt.sign(tokenPayload, "secret", {
+        expiresIn: "1d"
+    });
     res.cookie("accessToken", accessToken);
-    return accessToken;
+    return {
+        accessToken
+    };
 };
 export const AuthServices = {
-    login
+    login,
 };
 //# sourceMappingURL=auth.services.js.map

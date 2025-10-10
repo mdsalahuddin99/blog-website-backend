@@ -2,7 +2,9 @@ import type { Response } from "express";
 import { User } from "../user/user.model.js";
 import type { IAuth } from "./auth.interface.js";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import  jwt  from "jsonwebtoken";
+
+
 
 const login = async (payload: IAuth, res: Response) => {
     const { email, password } = payload;
@@ -32,11 +34,14 @@ const login = async (payload: IAuth, res: Response) => {
         isPremium: isUserExist.isVerified,
     };
 
-    const accessToken = jwt.sign(tokenPayload, "secret"); // You should replace "secret" with env variable
-
+    const accessToken = jwt.sign(tokenPayload, "secret", {
+        expiresIn: "1d"
+    })
     res.cookie("accessToken", accessToken);
 
-    return accessToken;
+    return {
+         accessToken
+    }
 };
 
 export const AuthServices = {
