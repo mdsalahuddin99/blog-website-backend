@@ -1,49 +1,315 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import { User } from "../user/user.model.js";
-import type { IAuth } from "./auth.interface.js";
+import type { IAuth } from "./auth.interface.js"
+import jwt, { type JwtPayload } from "jsonwebtoken"
+import  nodemailer  from 'nodemailer';
+
+
+
 import bcrypt from "bcryptjs";
-import  jwt  from "jsonwebtoken";
+import { createAccessToken, createShortAccessToken, verifyAccessToken } from "../../utils/accessToken.js";
+import { generateOTP } from "../../utils/generateOTP.js";
+import { encryptPassword } from "../../utils/password.js";
+import { envVars } from "../../config/env.js";
+import { sendEmail } from "../../utils/sendEmail.js";
+
+
+
 
 
 
 const login = async (payload: IAuth, res: Response) => {
     const { email, password } = payload;
 
-    const isUserExist = await User.findOne({ email });
+    const isUserExist = await User.findOne({ email })
 
     if (!isUserExist) {
-        return res.status(400).json({
+        res.status(400).json({
             status: "error",
-            message: "User doesn't exist",
-        });
+            // message: "user doesn't exist",
+            message: "email doesn't match"
+        })
     }
 
-    const isPasswordMatch = await bcrypt.compare(password, isUserExist.password as string);
+    const isPasswordMatch = await bcrypt.compare(password, (isUserExist?.password as string));
+
     if (!isPasswordMatch) {
-        return res.status(400).json({
+        res.status(400).json({
             status: "error",
-            message: "Invalid password",
-        });
+            // message: "user doesn't exist",
+            message: "password doesn't match"
+        })
+    }
+
+
+    const tokenPayload = {
+        name: isUserExist?.name,
+        email: isUserExist?.email,
+        avatar: isUserExist?.avatar,
+        isVerified: isUserExist?.isVerified,
+        isPremium: isUserExist?.isPremium
+    }
+
+    const accessToken = createAccessToken(tokenPayload)
+
+
+    res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: false
+    })
+
+
+    return {
+        accessToken,
+    };
+
+
+}
+
+const me = async (req: Request, res: Response) => {
+    const isAccessToken = req.cookies.accessToken;
+
+    if (!isAccessToken) {
+        res.status(401).json({
+            status: "error",
+            message: "user is not logged in"
+        })
+    }
+
+    const isVerified = verifyAccessToken(isAccessToken)
+
+    return isVerified;
+
+}
+
+
+// const sendOtp = async (req: Request, res: Response) => {
+
+//     const user = await User.findOne({ email: req.body.email });
+//     const otp = generateOTP()
+
+//     if (!user) {
+//         res.status(401).json({
+//             status: "error",
+//             message: "user doesn't exist"
+//         })
+//     }
+
+//     // Send Email to this user;
+
+//     const updateUser = await User.updateOne(
+//         { email: user?.email },
+//         { $set: { otp } },
+//     )
+
+
+//     const accessToken = createShortAccessToken({
+//         email: user?.email,
+//     })
+
+
+
+
+//     // Create a test account or replace with real credentials.
+//     const transporter = nodemailer.createTransport({
+//         host: envVars.EMAIL.SMTP_HOST,
+//         port: envVars.EMAIL.SMTP_PORT ,
+//         secure: false, // true for 465, false for other ports
+//         auth: {
+//             user: envVars.EMAIL.SMTP_USERNAME,
+//             pass: envVars.EMAIL.SMTP_PASS,
+//         },
+//     } as nodemailer.TransportOptions );
+
+
+//     const info = await transporter.sendMail({
+//         from: 'mdsalah241@gmail.com',
+//         to: "salahuddin3045@gmail.com",
+//         subject: "Hello ✔",
+//         // text: "Hello world?", // plain‑text body
+//         html: `<b>your otp ${otp}</b>`, // HTML 
+//     });
+
+//     console.log("Message sent:", info.messageId);
+
+//     res.cookie("accessToken", accessToken, {
+//         httpOnly: true,
+//         secure: false
+//     })
+
+
+
+// }
+
+
+
+
+
+const sendOtp = async (req: Request, res: Response) => {
+
+
+
+    const user = await User.findOne({ email: req.body.email });
+    const otp = generateOTP();
+
+    if (!user) {
+        res.status(401).json({
+            status: "error",
+            message: "user doesn't exist"
+        })
+    }
+
+    // Send Email to this user;
+
+    const updateUser = await User.updateOne(
+        { email: user?.email },
+        { $set: { otp } },
+    )
+
+
+    const accessToken = createShortAccessToken({
+        email: user?.email,
+    })
+
+
+    try {
+        const emailInfo = {
+            fileName: "otpMail.ejs",
+            from: "mdsalah241@gmail.com",
+            to: user?.email,
+            subject: "Reset Password OTP"
+        };
+        const templateData = {
+            appName: "Advance Blog",
+            name: user?.name,
+            otp: otp
+        }
+        await sendEmail(emailInfo, templateData);
+    } catch (error) {
+        console.log(error);
+
+    }
+
+
+
+
+    res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: false
+    })
+
+
+
+}
+
+const verifyOtp = async (req: Request, res: Response) => {
+
+    const isAccessToken = req.cookies.accessToken;
+
+    if (!isAccessToken) {
+        res.status(401).json({
+            status: "error",
+            message: "Invalid User"
+        })
+    }
+
+    const isVerified = verifyAccessToken(isAccessToken)
+
+    if (!isVerified) {
+        res.status(401).json({
+            status: "error",
+            message: "Unauthorize user"
+        })
+    }
+
+
+    const user = await User.findOne({ email: (isVerified as JwtPayload).email });
+
+    if (!user) {
+        res.status(401).json({
+            status: "error",
+            message: "user doesn't exist",
+        })
+    }
+
+    if (user?.otp != req.body.otp) {
+        res.status(401).json({
+            status: "error",
+            message: "OTP does not match"
+        })
     }
 
     const tokenPayload = {
-        name: isUserExist.name,
-        email: isUserExist.email,
-        avatar: isUserExist.avatar,
-        isVerified: isUserExist.isVerified,
-        isPremium: isUserExist.isVerified,
-    };
-
-    const accessToken = jwt.sign(tokenPayload, "secret", {
-        expiresIn: "1d"
-    })
-    res.cookie("accessToken", accessToken);
-
-    return {
-         accessToken
+        name: user?.name,
+        email: user?.email,
+        avatar: user?.avatar,
+        isVerified: user?.isVerified,
+        isPremium: user?.isPremium,
+        role: user?.role
     }
-};
+
+    const accessToken = createAccessToken(tokenPayload)
+
+
+    res.cookie("accessToken", accessToken, {
+        httpOnly: true,
+        secure: false
+    })
+
+
+
+}
+
+const updatePassword = async (req: Request, res: Response) => {
+
+    const isAccessToken = req.cookies.accessToken;
+
+    if (!isAccessToken) {
+        res.status(401).json({
+            status: "error",
+            message: "Invalid User"
+        })
+    }
+
+    const isVerified = verifyAccessToken(isAccessToken)
+
+    if (!isVerified) {
+        res.status(401).json({
+            status: "error",
+            message: "Unauthorize user"
+        })
+    }
+
+
+    const user = await User.findOne({ email: (isVerified as JwtPayload).email });
+
+    if (!user) {
+        res.status(401).json({
+            status: "error",
+            message: "user doesn't exist",
+        })
+    }
+
+    await User.findByIdAndUpdate(user?._id, {
+        password: await encryptPassword(req.body.password),
+        otp: null
+    })
+    res.clearCookie("accessToken");
+
+
+
+
+}
+
+
+
+
 
 export const AuthServices = {
     login,
-};
+    me,
+    sendOtp,
+    verifyOtp,
+    updatePassword
+
+}

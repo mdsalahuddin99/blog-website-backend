@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 export declare const User: mongoose.Model<{
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;
@@ -8,6 +10,8 @@ export declare const User: mongoose.Model<{
     isPremium: boolean;
 } & mongoose.DefaultTimestampProps, {}, {}, {}, mongoose.Document<unknown, {}, {
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;
@@ -18,6 +22,8 @@ export declare const User: mongoose.Model<{
     versionKey: "";
 }> & {
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;
@@ -32,6 +38,8 @@ export declare const User: mongoose.Model<{
     versionKey: "";
 }, {
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;
@@ -39,6 +47,8 @@ export declare const User: mongoose.Model<{
     isPremium: boolean;
 } & mongoose.DefaultTimestampProps, mongoose.Document<unknown, {}, mongoose.FlatRecord<{
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;
@@ -49,6 +59,8 @@ export declare const User: mongoose.Model<{
     versionKey: "";
 }>> & mongoose.FlatRecord<{
     name: string;
+    role: "USER" | "ADMIN";
+    otp: string;
     email: string;
     password: string;
     avatar: string;

@@ -1,3 +1,4 @@
+import { Admin } from "mongodb";
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
@@ -8,6 +9,18 @@ const userSchema = new mongoose.Schema(
             trim: true,
             minlength: [2, "Name must be at least 2 characters long"],
         },
+              role: {
+            type: String,
+            enum: ['USER','ADMIN'],
+            default:'USER',
+        },
+
+              otp: {
+            type: String,
+            default:'',
+        },
+
+
         email: {
             type: String,
             required: [true, "Email is required"],

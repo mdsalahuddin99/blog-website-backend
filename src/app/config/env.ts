@@ -6,13 +6,24 @@ dotenv.config();
 type envType={
     PORT: string;
     DB_URI: string;
+    EMAIL:{
+    SMTP_HOST: string;
+    SMTP_PORT: string;
+    SMTP_USERNAME: string;
+    SMTP_PASS: string;
+    }
 
 }
 
 const envVarsFn =  (): envType=> {
     const requiredEnvVariables = [
         'PORT',
-        'DB_URI'
+        'DB_URI',
+        'SMTP_HOST',
+        'SMTP_PORT',
+        'SMTP_USERNAME',
+        'SMTP_PASS'
+            
     ];
 
     requiredEnvVariables.forEach((key: string) => {
@@ -24,6 +35,13 @@ const envVarsFn =  (): envType=> {
     return{
         PORT: process.env.PORT as string,
         DB_URI: process.env.DB_URI as string,
+        EMAIL:{
+        SMTP_HOST: process.env.SMTP_HOST as string,
+        SMTP_PORT: process.env.SMTP_PORT as string,
+        SMTP_USERNAME: process.env.SMTP_USERNAME as string,
+        SMTP_PASS: process.env.SMTP_PASS as string,
+        }
+        
     }
 };
 
